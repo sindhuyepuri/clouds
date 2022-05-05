@@ -1,14 +1,27 @@
 import { MaterialObject } from "../lib/webglutils/Objects.js";
 import { Mat3, Mat4, Vec3, Vec4 } from "../lib/TSM.js";
+import { Noise } from "./Noise.js";
 
 export class Terrain implements MaterialObject {
   private vertices: Vec4[];
   private ind: Vec3[];
   private norms: Vec4[];
+  private noise: Noise;
 
   private verticesF32: Float32Array;
   private indicesU32: Uint32Array;
   private normalsF32: Float32Array;
+  private minHeight: number;
+  private maxHeight: number;
+
+  public getHeight(x: number, z: number) {
+    // console.log("noise " + this.noise.noise(x, 0, z));
+    let height = 10 * this.noise.noise(x/10, 0, z/10) - 5;
+    if (height < this.minHeight) this.minHeight = height;
+    if (height > this.maxHeight) this.maxHeight = height;
+    return height;
+    // return (x % 3) - 5;
+  }
 
   constructor() {
     /* Set default position. */
@@ -16,16 +29,21 @@ export class Terrain implements MaterialObject {
 
     /* Set indices. */
     this.ind = [];
-2
+
     let indx_count = 0;
+    
+    this.noise = new Noise();
+    this.noise.permutation();
+    this.minHeight = 9999999;
+    this.maxHeight = -9999999;
 
     for (let i = -100; i < 100; i++) {
       for (let j = -100; j < 100; j++) {
-        let height = Math.sin(i/8) - 5;
-        this.vertices.push(new Vec4([i, Math.sin(i/8) - 5, j, 1]));
-        this.vertices.push(new Vec4([i, Math.sin(i/8) - 5, j + 1, 1]));
-        this.vertices.push(new Vec4([i + 1, Math.sin((i + 1)/8) - 5, j + 1, 1]));
-        this.vertices.push(new Vec4([i + 1, Math.sin((i + 1)/8) - 5, j, 1]));
+        // let height = Math.sin((i + j)/8) - 5;
+        this.vertices.push(new Vec4([i, this.getHeight(i, j), j, 1]));
+        this.vertices.push(new Vec4([i, this.getHeight(i, j + 1), j + 1, 1]));
+        this.vertices.push(new Vec4([i + 1, this.getHeight(i + 1, j + 1), j + 1, 1]));
+        this.vertices.push(new Vec4([i + 1, this.getHeight(i + 1, j), j, 1]));
 
         this.ind.push(new Vec3([indx_count, indx_count + 1, indx_count + 2]));
         this.ind.push(new Vec3([indx_count, indx_count + 2, indx_count + 3]));
@@ -33,7 +51,8 @@ export class Terrain implements MaterialObject {
         indx_count += 4;
       }
     }
-    
+    console.log("max: " + this.maxHeight);
+    console.log("min: " + this.minHeight);
     /* Flatten Position. */
     this.verticesF32 = new Float32Array(this.vertices.length*4);
     this.vertices.forEach((v: Vec4, i: number) => {this.verticesF32.set(v.xyzw, i*4)});

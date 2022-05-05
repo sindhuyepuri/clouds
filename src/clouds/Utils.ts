@@ -26,6 +26,5 @@ export function flattenListOfVec(listofVec: Vec3[] | Vec4[]): number[] {
   }
   return out;
 }
-
 // You will likely want to add extra helper functions throughout your project.
 // Feel free to do so here!

@@ -59,7 +59,7 @@ export class CloudsAnimation extends CanvasAnimation {
     /* debugger; */
     this.lightPosition = new Vec4([-10.0, 10.0, -10.0, 1.0]);
     this.backgroundColor = new Vec4([0.529411764705882, 0.807843137254902, 0.980392156862745, 1.0]);
-
+    console.log("init terrain");
     this.initTerrain();
 
     this.gui.reset();
