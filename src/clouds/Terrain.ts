@@ -21,23 +21,18 @@ export class Terrain implements MaterialObject {
 
     for (let i = -100; i < 100; i++) {
       for (let j = -100; j < 100; j++) {
-        // let height = Math.sin(i + j);
         let height = -2;
+        this.vertices.push(new Vec4([i, height, j, 1]));
+        this.vertices.push(new Vec4([i, height, j + 1, 1]));
         this.vertices.push(new Vec4([i + 1, height, j + 1, 1]));
-        this.vertices.push(new Vec4([i + 2, height, j, 1]));
-        this.vertices.push(new Vec4([i + 2, height, j + 2, 1]));
-        this.vertices.push(new Vec4([i,     height, j + 2, 1]));
-        this.vertices.push(new Vec4([i, height, j,     1]));
+        this.vertices.push(new Vec4([i + 1, height, j, 1]));
 
-        this.ind.push(new Vec3([indx_count, indx_count + 2, indx_count + 1]));
-        this.ind.push(new Vec3([indx_count, indx_count + 3, indx_count + 2]));
-        this.ind.push(new Vec3([indx_count, indx_count + 4, indx_count + 3]));
-        this.ind.push(new Vec3([indx_count, indx_count + 1, indx_count + 4]));
+        this.ind.push(new Vec3([indx_count, indx_count + 1, indx_count + 2]));
+        this.ind.push(new Vec3([indx_count, indx_count + 2, indx_count + 3]));
 
-        indx_count += 5;
+        indx_count += 4;
       }
     }
-
     
     /* Flatten Position. */
     this.verticesF32 = new Float32Array(this.vertices.length*4);
