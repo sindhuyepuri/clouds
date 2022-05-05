@@ -16,16 +16,16 @@ export class Terrain implements MaterialObject {
 
     /* Set indices. */
     this.ind = [];
-
+2
     let indx_count = 0;
 
     for (let i = -100; i < 100; i++) {
       for (let j = -100; j < 100; j++) {
-        let height = -2;
-        this.vertices.push(new Vec4([i, height, j, 1]));
-        this.vertices.push(new Vec4([i, height, j + 1, 1]));
-        this.vertices.push(new Vec4([i + 1, height, j + 1, 1]));
-        this.vertices.push(new Vec4([i + 1, height, j, 1]));
+        let height = Math.sin(i/8) - 5;
+        this.vertices.push(new Vec4([i, Math.sin(i/8) - 5, j, 1]));
+        this.vertices.push(new Vec4([i, Math.sin(i/8) - 5, j + 1, 1]));
+        this.vertices.push(new Vec4([i + 1, Math.sin((i + 1)/8) - 5, j + 1, 1]));
+        this.vertices.push(new Vec4([i + 1, Math.sin((i + 1)/8) - 5, j, 1]));
 
         this.ind.push(new Vec3([indx_count, indx_count + 1, indx_count + 2]));
         this.ind.push(new Vec3([indx_count, indx_count + 2, indx_count + 3]));

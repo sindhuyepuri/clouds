@@ -56,20 +56,14 @@ export let terrainVSText = `
 	uniform mat4 mProj;
 
     void main () {
-        vec3 bumpScale = vec3(2.0, 2.0, 2.0);
-        vec3 vAmount = vec3(1.0, 1.0, 1.0);
-
-        vec3 newPosition = position + normal.xyz * bumpScale * vAmount;
-        newPosition = vertPosition;
-        // vec3 newPosition = position + normal.xyz * vec3(2.0, 2.0, 2.0);
 
 		//  Convert vertex to camera coordinates and the NDC
-        gl_Position = mProj * mView * mWorld * vec4 (newPosition, 1.0);
+        gl_Position = mProj * mView * mWorld * vec4 (vertPosition, 1.0);
         
         //  Compute light direction (world coordinates)
-        lightDir = lightPosition - vec4(newPosition, 1.0);
+        lightDir = lightPosition - vec4(vertPosition, 1.0);
 		
-        position = newPosition;
+        position = vertPosition;
         //  Pass along the vertex normal (world coordinates)
         normal = aNorm;
     }       
@@ -88,9 +82,9 @@ export let terrainFSText = `
         vec4 lightdir_norm = normalize(lightDir);
         float light = dot(normalize(lightDir), normal);
 
-        // float color = vec4(0.588, 0.294, 0.0, 1.0);
-        // gl_FragColor = abs(vec4(light * color, light * color, light * color, 1.0));
-        gl_FragColor = vec4(0.588, 0.294, 0.0, 1.0);
+        vec4 color = vec4(0.588, 0.294, 0.0, 1.0);
+        gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
+        // gl_FragColor = vec4(0.588, 0.294, 0.0, 1.0);
     }
 `;
 
