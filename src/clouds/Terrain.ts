@@ -13,10 +13,19 @@ export class Terrain implements MaterialObject {
   private normalsF32: Float32Array;
   private minHeight: number;
   private maxHeight: number;
+  private vertNorms: Vec3[][];
 
   public getHeight(x: number, z: number) {
     // console.log("noise " + this.noise.noise(x, 0, z));
-    let height = 10 * this.noise.noise(x/10, 0, z/10) - 5;
+    // let height = 0.5 * this.noise.noise(x/2, 0, z/2);
+    // height += 20 * this.noise.noise(x/20, 0, z/20);
+    let height = -5;
+    for (let i = 1; i <= 10; i++) {
+      let pow2 = Math.pow(1.5, i);
+      height += pow2 * this.noise.noise(x/pow2, 0, z/pow2);
+    }
+    height /= 2.0;
+    // height -= 5;
     if (height < this.minHeight) this.minHeight = height;
     if (height > this.maxHeight) this.maxHeight = height;
     return height;
@@ -37,20 +46,39 @@ export class Terrain implements MaterialObject {
     this.minHeight = 9999999;
     this.maxHeight = -9999999;
 
+    this.vertNorms = [];
+    for (let i = 0; i < 201; i++) {
+      this.vertNorms.push([]);
+      for (let j = 0; i < 201; j++) {
+        this.vertNorms[i].push(new Vec3([0, 0, 0]));
+      }
+    }
+
     for (let i = -100; i < 100; i++) {
       for (let j = -100; j < 100; j++) {
         // let height = Math.sin((i + j)/8) - 5;
-        this.vertices.push(new Vec4([i, this.getHeight(i, j), j, 1]));
-        this.vertices.push(new Vec4([i, this.getHeight(i, j + 1), j + 1, 1]));
-        this.vertices.push(new Vec4([i + 1, this.getHeight(i + 1, j + 1), j + 1, 1]));
-        this.vertices.push(new Vec4([i + 1, this.getHeight(i + 1, j), j, 1]));
+        let v1 = new Vec4([i, this.getHeight(i, j), j, 1]);
+        let v2 = new Vec4([i, this.getHeight(i, j + 1), j + 1, 1]);
+        let v3 = new Vec4([i + 1, this.getHeight(i + 1, j + 1), j + 1, 1]);
+        let v4 = new Vec4([i + 1, this.getHeight(i + 1, j), j, 1]);
+        this.vertices.push(v1, v2, v3, v4);
 
         this.ind.push(new Vec3([indx_count, indx_count + 1, indx_count + 2]));
         this.ind.push(new Vec3([indx_count, indx_count + 2, indx_count + 3]));
 
+        let tri_leg_1 = Vec3.difference(new Vec3([...v1.xyz]), new Vec3([...v2.xyz]));
+        let tri_leg_2 = Vec3.difference(new Vec3([...v1.xyz]), new Vec3([...v3.xyz]));
+        let normal = Vec3.cross(tri_leg_1, tri_leg_2);
+        this.vertNorms[i + 100][j + 100].add(normal);
+        this.vertNorms[i + 100][j + 1 + 100].add(normal);
+        this.vertNorms[i + 1 + 100][j + 100].add(normal);
+        this.vertNorms[i + 1 + 100][j + 1 + 100].add(normal);
+
         indx_count += 4;
       }
     }
+
+
     console.log("max: " + this.maxHeight);
     console.log("min: " + this.minHeight);
     /* Flatten Position. */
@@ -64,8 +92,17 @@ export class Terrain implements MaterialObject {
     /* Set Normals. */
     this.norms = [];
 
-    for (let i = 0; i < this.vertices.length; i++) {
-      this.norms.push(new Vec4([0.0, 1.0, 0.0, 0.0]));
+    // for (let i = 0; i < this.vertices.length; i++) {
+    //   this.norms.push(new Vec4([0.0, 1.0, 0.0, 0.0]));
+    // }
+
+    for (let i = -100; i < 100; i++) {
+      for (let j = -100; j < 100; j++) {
+        this.norms.push(new Vec4 ([...this.vertNorms[i + 100][j + 100].normalize().xyz, 0.0]));
+        this.norms.push(new Vec4 ([...this.vertNorms[i + 100][j + 1 + 100].normalize().xyz, 0.0]));
+        this.norms.push(new Vec4 ([...this.vertNorms[i + 1 + 100][j + 100].normalize().xyz, 0.0]));
+        this.norms.push(new Vec4 ([...this.vertNorms[i + 1 + 100][j + 1 + 100].normalize().xyz, 0.0]));
+      }
     }
 
     this.normalsF32 = new Float32Array(this.norms.length*5);
