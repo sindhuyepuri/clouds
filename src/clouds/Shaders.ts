@@ -77,10 +77,8 @@ export let terrainFSText = `
     varying vec4 lightDir;
 
     void main () {
-        float pos_x = position.x * 0.2;
-        float pos_z = position.z * 0.2;
         vec4 lightdir_norm = normalize(lightDir);
-        float light = dot(normalize(lightDir), normal);
+        float light = dot(normalize(lightDir), normalize(normal));
 
         vec4 color = vec4(0.588, 0.294, 0.0, 1.0);
         if (position.y < -9.0) {
@@ -98,7 +96,13 @@ export let terrainFSText = `
         else {
             color = vec4(1.0, 1.0, 1.0, 1.0);
         }
-        gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
+        // gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
+        // gl_FragColor = abs(vec4(normalize(normal).x * color.x, normalize(normal).y * color.y, normalize(normal).z * color.z, 1.0));
+        // gl_FragColor = vec3((normalize(normal).x + 1.0) / 2.0, (normalize(normal).y + 1.0) / 2.0, (normalize(normal).z + 1.0) / 2.0);
+        gl_FragColor = abs(normalize(normal));
+        // gl_FragColor = vec4(light, light, light, 1.0);
+        // gl_FragColor = lightdir_norm;
+        // gl_FragColor = abs(vec4(color.x, color.y, color.z, 1.0));
     }
 `;
 
