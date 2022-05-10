@@ -8,9 +8,12 @@ import {
   defaultFSText,
   defaultVSText,
   terrainFSText,
-  terrainVSText
+  terrainVSText,
+  skyFSText,
+  skyVSText
 } from "./Shaders.js";
 import { Mat4, Vec4 } from "../lib/TSM.js";
+import { Sky } from "./Sky.js"
 
 export class CloudsAnimation extends CanvasAnimation {
   private gui: GUI;
@@ -37,6 +40,28 @@ export class CloudsAnimation extends CanvasAnimation {
   private terrainProjUniformLocation: WebGLUniformLocation = -1;
   private terrainLightUniformLocation: WebGLUniformLocation = -1;
 
+  /* The Sky */
+  private sky: Sky = new Sky();
+
+  /* Sky Rendering Info */
+  private skyVAO: WebGLVertexArrayObjectOES = -1;
+  private skyProgram: WebGLProgram = -1;
+
+  /* Sky Buffers */
+  private skyPosBuffer: WebGLBuffer = -1;
+  private skyIndexBuffer: WebGLBuffer = -1;
+  private skyNormBuffer: WebGLBuffer = -1;
+
+  /* Sky Attribute Locations */
+  private skyPosAttribLoc: GLint = -1;
+  private skyNormAttribLoc: GLint = -1;
+
+  /* Sky Uniform Locations */
+  private skyWorldUniformLocation: WebGLUniformLocation = -1;
+  private skyViewUniformLocation: WebGLUniformLocation = -1;
+  private skyProjUniformLocation: WebGLUniformLocation = -1;
+  private skyLightUniformLocation: WebGLUniformLocation = -1;
+
   /* Global Rendering Info */
   private lightPosition: Vec4 = new Vec4();
   private backgroundColor: Vec4 = new Vec4();
@@ -51,6 +76,11 @@ export class CloudsAnimation extends CanvasAnimation {
     this.reset();
   }
 
+  // public createCloudTexture () {
+	// 	const gl: WebGLRenderingContext = this.ctx;
+  //   gl.bindTexture(gl.TEXTURE_2D)
+	// }
+
   /**
    * Setup the animation. This can be called again to reset the animation.
    */
@@ -61,6 +91,7 @@ export class CloudsAnimation extends CanvasAnimation {
     this.backgroundColor = new Vec4([0.529411764705882, 0.807843137254902, 0.980392156862745, 1.0]);
     console.log("init terrain");
     this.initTerrain();
+    this.initSky();
 
     this.gui.reset();
   }
@@ -179,6 +210,124 @@ export class CloudsAnimation extends CanvasAnimation {
   }
 
   /**
+   * Sets up the sky and sky drawing
+   */
+  public initSky(): void {
+      /* Alias context for syntactic convenience */
+    const gl: WebGLRenderingContext = this.ctx;
+
+    /* Compile Shaders */
+    this.skyProgram = WebGLUtilities.createProgram(
+      gl,
+      skyVSText,
+      skyFSText
+    );
+    gl.useProgram(this.skyProgram);
+
+    /* Create and setup positions buffer*/
+    // Returns a number that indicates where 'vertPosition' is in the shader program
+    this.skyPosAttribLoc = gl.getAttribLocation(
+      this.skyProgram,
+      "vertPosition"
+    );
+
+    this.skyVAO = this.extVAO.createVertexArrayOES() as WebGLVertexArrayObjectOES;
+    this.extVAO.bindVertexArrayOES(this.skyVAO);
+
+    /* Ask WebGL to create a buffer */
+    this.skyPosBuffer = gl.createBuffer() as WebGLBuffer;
+    /* Tell WebGL that you are operating on this buffer */
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.skyPosBuffer);
+    /* Fill the buffer with data */
+    gl.bufferData(gl.ARRAY_BUFFER, this.sky.positionsFlat(), gl.STATIC_DRAW);
+    console.log("sky positions " + this.sky.positionsFlat());
+    console.log("sky normals " + this.sky.normalsFlat());
+    console.log("sky indices " + this.sky.indicesFlat())
+
+    /* Tell WebGL how to read the buffer and where the data goes */
+    gl.vertexAttribPointer(
+      this.skyPosAttribLoc /* Essentially, the destination */,
+      4 /* Number of bytes per primitive */,
+      gl.FLOAT /* The type of data */,
+      false /* Normalize data. Should be false. */,
+      4 *
+        Float32Array.BYTES_PER_ELEMENT /* Number of bytes to the next element */,
+      0 /* Initial offset into buffer */
+    );
+    /* Tell WebGL to enable to attribute */
+    gl.enableVertexAttribArray(this.skyPosAttribLoc);
+
+    /* Create and setup normals buffer*/
+    this.skyNormAttribLoc = gl.getAttribLocation(
+      this.skyProgram,
+      "aNorm"
+    );
+
+    this.skyNormBuffer = gl.createBuffer() as WebGLBuffer;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.skyNormBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, this.sky.normalsFlat(), gl.STATIC_DRAW);
+
+    gl.vertexAttribPointer(
+      this.skyNormAttribLoc,
+      4,
+      gl.FLOAT,
+      false,
+      4 * Float32Array.BYTES_PER_ELEMENT,
+      0
+    );
+    gl.enableVertexAttribArray(this.skyNormAttribLoc);
+
+    /* Create and setup index buffer*/
+    this.skyIndexBuffer = gl.createBuffer() as WebGLBuffer;
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.skyIndexBuffer);
+    gl.bufferData(
+      gl.ELEMENT_ARRAY_BUFFER,
+      this.sky.indicesFlat(),
+      gl.STATIC_DRAW
+    );
+
+    /* End VAO recording */
+    this.extVAO.bindVertexArrayOES(this.skyVAO);
+
+    /* Get uniform locations */
+    this.skyWorldUniformLocation = gl.getUniformLocation(
+      this.skyProgram,
+      "mWorld"
+    ) as WebGLUniformLocation;
+    this.skyViewUniformLocation = gl.getUniformLocation(
+      this.skyProgram,
+      "mView"
+    ) as WebGLUniformLocation;
+    this.skyProjUniformLocation = gl.getUniformLocation(
+      this.skyProgram,
+      "mProj"
+    ) as WebGLUniformLocation;
+    this.skyLightUniformLocation = gl.getUniformLocation(
+      this.skyProgram,
+      "lightPosition"
+    ) as WebGLUniformLocation;
+    
+    let skyMatrix: Mat4 = Mat4.identity;
+    /* Bind uniforms */
+    gl.uniformMatrix4fv(
+      this.skyWorldUniformLocation,
+      false,
+      new Float32Array(skyMatrix.all())
+    );
+    gl.uniformMatrix4fv(
+      this.skyViewUniformLocation,
+      false,
+      new Float32Array(Mat4.identity.all())
+    );
+    gl.uniformMatrix4fv(
+      this.skyProjUniformLocation,
+      false,
+      new Float32Array(Mat4.identity.all())
+    );
+    gl.uniform4fv(this.skyLightUniformLocation, this.lightPosition.xyzw);
+  }
+
+  /**
    * Draws a single frame
    */
   public draw(): void {
@@ -254,6 +403,77 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.drawElements(
       gl.TRIANGLES,
       this.terrain.indicesFlat().length,
+      gl.UNSIGNED_INT,
+      0
+    );
+
+    // Draw the sky
+    gl.disable(gl.CULL_FACE);
+    // gl.frontFace(gl.CW);
+    // gl.cullFace(gl.BACK);
+
+    const modelSkyMatrix = Mat4.identity;
+    gl.useProgram(this.skyProgram);
+
+    this.extVAO.bindVertexArrayOES(this.skyVAO);
+
+    /* Update menger buffers */
+  
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.skyPosBuffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        this.sky.positionsFlat(),
+        gl.STATIC_DRAW
+      );
+      gl.vertexAttribPointer(
+        this.skyPosAttribLoc,
+        4,
+        gl.FLOAT,
+        false,
+        4 * Float32Array.BYTES_PER_ELEMENT,
+        0
+      );
+      gl.enableVertexAttribArray(this.skyPosAttribLoc);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.skyNormBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, this.sky.normalsFlat(), gl.STATIC_DRAW);
+      gl.vertexAttribPointer(
+        this.skyNormAttribLoc,
+        4,
+        gl.FLOAT,
+        false,
+        4 * Float32Array.BYTES_PER_ELEMENT,
+        0
+      );
+      gl.enableVertexAttribArray(this.skyNormAttribLoc);
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.skyIndexBuffer);
+      gl.bufferData(
+        gl.ELEMENT_ARRAY_BUFFER,
+        this.sky.indicesFlat(),
+        gl.STATIC_DRAW
+      );
+
+    /* Update menger uniforms */
+    gl.uniformMatrix4fv(
+      this.skyWorldUniformLocation,
+      false,
+      new Float32Array(modelSkyMatrix.all())
+    );
+    gl.uniformMatrix4fv(
+      this.skyViewUniformLocation,
+      false,
+      new Float32Array(this.gui.viewMatrix().all())
+    );
+    gl.uniformMatrix4fv(
+      this.skyProjUniformLocation,
+      false,
+      new Float32Array(this.gui.projMatrix().all())
+    );
+
+    gl.drawElements(
+      gl.TRIANGLES,
+      this.sky.indicesFlat().length,
       gl.UNSIGNED_INT,
       0
     );

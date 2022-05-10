@@ -105,3 +105,50 @@ export let terrainFSText = `
     }
 `;
 
+
+export let skyVSText = `
+precision mediump float;
+
+    attribute vec3 vertPosition;
+    attribute vec3 vertColor;
+    attribute vec4 aNorm;
+    
+    varying vec4 lightDir;
+    varying vec4 normal;   
+    varying vec3 position;
+
+    uniform vec4 lightPosition;
+    uniform mat4 mWorld;
+    uniform mat4 mView;
+	uniform mat4 mProj;
+
+    void main () {
+		//  Convert vertex to camera coordinates and the NDC
+        gl_Position = mProj * mView * mWorld * vec4 (vertPosition, 1.0);
+        
+        //  Compute light direction (world coordinates)
+        lightDir = lightPosition - vec4(vertPosition, 1.0);
+		
+        position = vertPosition;
+        //  Pass along the vertex normal (world coordinates)
+        normal = aNorm;
+    }       
+`;
+export let skyFSText = `
+    precision mediump float;
+
+    varying vec3 position;
+    varying vec4 normal;   
+    varying vec4 lightDir;
+
+    void main () {
+        float pos_x = position.x * 0.2;
+        float pos_y = position.y * 0.2;
+        vec4 lightdir_norm = normalize(lightDir);
+        float light = dot(normalize(lightDir), normal);
+        // float color = clamp(light * mod(mod(floor(pos_x), 2.0) + mod(floor(pos_z), 2.0), 2.0), 0.0, 1.0);
+        float color = mod(mod(floor(pos_x), 2.0) +  mod(floor(pos_y), 2.0), 2.0);
+        gl_FragColor = abs(vec4(light * color, light * color, light * color, 1.0));
+        // gl_FragColor = vec4(0.3, 0.3, 0.7, 1.0);
+    }
+`;
