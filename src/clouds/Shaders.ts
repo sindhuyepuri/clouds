@@ -88,27 +88,18 @@ export let terrainFSText = `
         vec4 lightdir_norm = normalize(lightDir);
         float light =  dot(normalize(lightDir), normalize(normal));
         
-        vec4 color = vec4(0.48, 0.294, 0.0, 1.0);
-        // if (position.y < -9.0) {
-        //     color = vec4(0.486274509803922, 0.552941176470588, 0.298039215686275, 1.0);
-        // }
-        // else if (position.y < -9.5) {
-        //     color = vec4(0.709803921568627, 0.729411764705882, 0.380392156862745, 1.0);
-        // }
-        // else if (position.y < -5.0) {
-        //     color = vec4(0.447058823529412, 0.329411764705882, 0.156862745098039, 1.0);
-        // }
-        // else if (position.y < -3.5) {
-        //     color = vec4(0.898039215686275, 0.850980392156863, 0.76078431372549, 1.0);
-        // }
-        // else {
-        //     color = vec4(1.0, 1.0, 1.0, 1.0);
-        // }
-        float atmos = exp(-0.01 * position.z);
-        color = color * atmos + vec4(0.667, 0.667, 0.667, 1.0) * (1.0 - atmos);
+        vec4 color = vec4(0.48, 0.294, 0.0, 1.0); // base brown
 
         float grass = smoothstepd(0.6, 1.0, normalize(normal).y).x;
-        color = color * (1.0 - grass) +  vec4(0.486274509803922, 0.552941176470588, 0.298039215686275, 1.0) * grass;
+        color = color * (1.0 - grass) +  vec4(0.486, 0.552, 0.298, 1.0) * grass;
+        
+        float snow = exp(0.15 * position.y); 
+        // float snow = smoothstepd(-10.0, -2.0, position.y).x;
+        color = vec4(1.0, 1.0, 1.0, 1.0) * snow + color * (1.0 - snow);
+
+        float atmos = exp(-0.01 * position.z);
+        // color = color * atmos + vec4(170.0/255.0, 190.0/255.0, 199.0/255.0, 1.0) * (1.0 - atmos);
+        color = color * atmos + vec4(0.66, 0.66, 0.66, 1.0) * (1.0 - atmos);
 
         gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
     }
