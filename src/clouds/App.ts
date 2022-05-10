@@ -55,12 +55,16 @@ export class CloudsAnimation extends CanvasAnimation {
   /* Sky Attribute Locations */
   private skyPosAttribLoc: GLint = -1;
   private skyNormAttribLoc: GLint = -1;
+  private skyTexPosAttribLoc: GLint = -1; // texture
+  private skyTexCoordAttribLoc: GLint = -1; // texture
 
   /* Sky Uniform Locations */
   private skyWorldUniformLocation: WebGLUniformLocation = -1;
   private skyViewUniformLocation: WebGLUniformLocation = -1;
   private skyProjUniformLocation: WebGLUniformLocation = -1;
   private skyLightUniformLocation: WebGLUniformLocation = -1;
+  private skyTexUniformLocation : WebGLUniformLocation = -1; // texture
+
 
   /* Global Rendering Info */
   private lightPosition: Vec4 = new Vec4();
@@ -209,6 +213,53 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.uniform4fv(this.terrainLightUniformLocation, this.lightPosition.xyzw);
   }
 
+  public initTexture(): void {
+    const gl: WebGLRenderingContext = this.ctx;
+
+    // look up where the vertex data needs to go.
+    this.skyTexPosAttribLoc = gl.getAttribLocation(this.skyProgram, "a_position");
+    this.skyTexCoordAttribLoc = gl.getAttribLocation(this.skyProgram, "a_texcoord");
+      
+    // Create a buffer for texcoords.
+    var texBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+    gl.enableVertexAttribArray(this.skyTexCoordAttribLoc);
+    
+    // We'll supply texcoords as floats.
+    gl.vertexAttribPointer(this.skyTexCoordAttribLoc, 2, gl.FLOAT, false, 0, 0);
+    
+    // Set Texcoords.
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([
+        0.5, 0.5,
+        1.0, 0.5,
+        0.5, 1,
+        0.0, 0.5,
+        0.5, 0.0
+      ]),
+    gl.STATIC_DRAW);    
+
+    // Create a texture.
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    
+    // Fill the texture with a 1x1 white pixel.
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                  new Uint8Array([255, 255, 255, 255]));
+    
+    // Asynchronously load an image
+    var image = new Image();
+    image.src = "resources/noise.png";
+    image.addEventListener('load', function() {
+      // Now that the image has loaded make copy it to the texture.
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image);
+      gl.generateMipmap(gl.TEXTURE_2D);
+});
+
+  }
+
   /**
    * Sets up the sky and sky drawing
    */
@@ -233,6 +284,8 @@ export class CloudsAnimation extends CanvasAnimation {
 
     this.skyVAO = this.extVAO.createVertexArrayOES() as WebGLVertexArrayObjectOES;
     this.extVAO.bindVertexArrayOES(this.skyVAO);
+
+    this.initTexture();
 
     /* Ask WebGL to create a buffer */
     this.skyPosBuffer = gl.createBuffer() as WebGLBuffer;
@@ -306,7 +359,11 @@ export class CloudsAnimation extends CanvasAnimation {
       this.skyProgram,
       "lightPosition"
     ) as WebGLUniformLocation;
-    
+    this.skyTexUniformLocation = gl.getUniformLocation(
+      this.skyProgram,
+      "u_texture"
+    ) as WebGLUniformLocation;
+
     let skyMatrix: Mat4 = Mat4.identity;
     /* Bind uniforms */
     gl.uniformMatrix4fv(
@@ -325,6 +382,7 @@ export class CloudsAnimation extends CanvasAnimation {
       new Float32Array(Mat4.identity.all())
     );
     gl.uniform4fv(this.skyLightUniformLocation, this.lightPosition.xyzw);
+    gl.uniform1i(this.skyTexUniformLocation, 0);
   }
 
   /**

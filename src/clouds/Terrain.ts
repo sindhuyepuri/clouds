@@ -17,11 +17,14 @@ export class Terrain implements MaterialObject {
 
   public getHeight(x: number, z: number) {
     let height = -15;
-    for (let i = 1; i <= 10; i++) {
-      let pow2 = Math.pow(1.55, i);
+    let skip_iters = [3, 5, 7];
+    for (let i = 1; i <= 12; i++) {
+      if (skip_iters.indexOf(i) !== -1) continue; // band pass filter
+      let pow2 = Math.pow(1.65, i);
       height += pow2 * this.noise.noise(x/pow2, 0, z/pow2);
     }
     height /= 3.0;
+    height -= 6;
     if (height < this.minHeight) this.minHeight = height;
     if (height > this.maxHeight) this.maxHeight = height;
     return height;
@@ -62,8 +65,8 @@ export class Terrain implements MaterialObject {
     /* Set Normals. */
     this.norms = [];
     let incr = 1;
-    for (let i = -200; i < 200; i+=incr) {
-      for (let j = 0; j < 300; j+=incr) {
+    for (let i = -300; i < 300; i+=incr) {
+      for (let j = 0; j < 500; j+=incr) { // was 300
         let v1 = new Vec4([i, this.getHeight(i, j), j, 1]);
         let v2 = new Vec4([i, this.getHeight(i, j + 1), j + 1, 1]);
         let v3 = new Vec4([i + 1, this.getHeight(i + 1, j + 1), j + 1, 1]);
