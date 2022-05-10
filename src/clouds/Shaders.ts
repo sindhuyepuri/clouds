@@ -76,33 +76,41 @@ export let terrainFSText = `
     varying vec4 normal;   
     varying vec4 lightDir;
 
+    vec2 smoothstepd( float a, float b, float x) {
+        if( x<a ) return vec2( 0.0, 0.0 );
+        if( x>b ) return vec2( 1.0, 0.0 );
+        float ir = 1.0/(b-a);
+        x = (x-a)*ir;
+        return vec2( x*x*(3.0-2.0*x), 6.0*x*(1.0-x)*ir );
+    }
+
     void main () {
         vec4 lightdir_norm = normalize(lightDir);
-        float light = dot(normalize(lightDir), normalize(normal));
+        float light =  dot(normalize(lightDir), normalize(normal));
+        
+        vec4 color = vec4(0.48, 0.294, 0.0, 1.0);
+        // if (position.y < -9.0) {
+        //     color = vec4(0.486274509803922, 0.552941176470588, 0.298039215686275, 1.0);
+        // }
+        // else if (position.y < -9.5) {
+        //     color = vec4(0.709803921568627, 0.729411764705882, 0.380392156862745, 1.0);
+        // }
+        // else if (position.y < -5.0) {
+        //     color = vec4(0.447058823529412, 0.329411764705882, 0.156862745098039, 1.0);
+        // }
+        // else if (position.y < -3.5) {
+        //     color = vec4(0.898039215686275, 0.850980392156863, 0.76078431372549, 1.0);
+        // }
+        // else {
+        //     color = vec4(1.0, 1.0, 1.0, 1.0);
+        // }
+        float atmos = exp(-0.01 * position.z);
+        color = color * atmos + vec4(0.667, 0.667, 0.667, 1.0) * (1.0 - atmos);
 
-        vec4 color = vec4(0.588, 0.294, 0.0, 1.0);
-        if (position.y < -9.0) {
-            color = vec4(0.486274509803922, 0.552941176470588, 0.298039215686275, 1.0);
-        }
-        else if (position.y < -7.5) {
-            color = vec4(0.709803921568627, 0.729411764705882, 0.380392156862745, 1.0);
-        }
-        else if (position.y < -5.0) {
-            color = vec4(0.447058823529412, 0.329411764705882, 0.156862745098039, 1.0);
-        }
-        else if (position.y < -3.5) {
-            color = vec4(0.898039215686275, 0.850980392156863, 0.76078431372549, 1.0);
-        }
-        else {
-            color = vec4(1.0, 1.0, 1.0, 1.0);
-        }
-        // gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
-        // gl_FragColor = abs(vec4(normalize(normal).x * color.x, normalize(normal).y * color.y, normalize(normal).z * color.z, 1.0));
-        // gl_FragColor = vec3((normalize(normal).x + 1.0) / 2.0, (normalize(normal).y + 1.0) / 2.0, (normalize(normal).z + 1.0) / 2.0);
-        gl_FragColor = abs(normalize(normal));
-        // gl_FragColor = vec4(light, light, light, 1.0);
-        // gl_FragColor = lightdir_norm;
-        // gl_FragColor = abs(vec4(color.x, color.y, color.z, 1.0));
+        float grass = smoothstepd(0.6, 1.0, normalize(normal).y).x;
+        color = color * (1.0 - grass) +  vec4(0.486274509803922, 0.552941176470588, 0.298039215686275, 1.0) * grass;
+
+        gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
     }
 `;
 
