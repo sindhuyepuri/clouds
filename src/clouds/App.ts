@@ -65,6 +65,15 @@ export class CloudsAnimation extends CanvasAnimation {
   private skyLightUniformLocation: WebGLUniformLocation = -1;
   private skyTexUniformLocation : WebGLUniformLocation = -1; // texture
 
+  /* Moving Sky */
+  private texCoordScale = 0.6;
+  private texCoordXOffset = 0;
+  private texCoordYOffset = 0;
+  private texMaxYOffset = 1 - this.texCoordScale; 
+  private texMaxXOffset = this.texMaxYOffset;
+  private startMillis = 0.0;
+  private currMillis = 0.0;
+  private texTotalMillis = 120000.0;
 
   /* Global Rendering Info */
   private lightPosition: Vec4 = new Vec4();
@@ -213,13 +222,9 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.uniform4fv(this.terrainLightUniformLocation, this.lightPosition.xyzw);
   }
 
-  public initTexture(): void {
+  public setTexCoords () {
     const gl: WebGLRenderingContext = this.ctx;
 
-    // look up where the vertex data needs to go.
-    this.skyTexPosAttribLoc = gl.getAttribLocation(this.skyProgram, "a_position");
-    this.skyTexCoordAttribLoc = gl.getAttribLocation(this.skyProgram, "a_texcoord");
-      
     // Create a buffer for texcoords.
     var texBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
@@ -232,13 +237,24 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.bufferData(
       gl.ARRAY_BUFFER,
       new Float32Array([
-        0.5, 0.5,
-        1.0, 0.5,
-        0.5, 1,
-        0.0, 0.5,
-        0.5, 0.0
+        0.5 * this.texCoordScale + this.texCoordXOffset, 0.5 * this.texCoordScale + this.texCoordYOffset,
+        1.0 * this.texCoordScale + this.texCoordXOffset, 0.5 * this.texCoordScale + this.texCoordYOffset,
+        0.5 * this.texCoordScale + this.texCoordXOffset, 1.0 * this.texCoordScale + this.texCoordYOffset,
+        0.0 * this.texCoordScale + this.texCoordXOffset, 0.5 * this.texCoordScale + this.texCoordYOffset,
+        0.5 * this.texCoordScale + this.texCoordXOffset, 0.0 * this.texCoordScale + this.texCoordYOffset,
+         
       ]),
     gl.STATIC_DRAW);    
+  }
+
+  public initTexture(): void {
+    const gl: WebGLRenderingContext = this.ctx;
+
+    // look up where the vertex data needs to go.
+    this.skyTexPosAttribLoc = gl.getAttribLocation(this.skyProgram, "a_position");
+    this.skyTexCoordAttribLoc = gl.getAttribLocation(this.skyProgram, "a_texcoord");
+      
+    this.setTexCoords();
 
     // Create a texture.
     var texture = gl.createTexture();
@@ -250,14 +266,13 @@ export class CloudsAnimation extends CanvasAnimation {
     
     // Asynchronously load an image
     var image = new Image();
-    image.src = "resources/noise.png";
+    image.src = "resources/noise3.png";
     image.addEventListener('load', function() {
       // Now that the image has loaded make copy it to the texture.
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image);
       gl.generateMipmap(gl.TEXTURE_2D);
-});
-
+    });
   }
 
   /**
@@ -389,8 +404,16 @@ export class CloudsAnimation extends CanvasAnimation {
    * Draws a single frame
    */
   public draw(): void {
-
     const gl: WebGLRenderingContext = this.ctx;
+
+    let curr = new Date().getTime();
+    if (this.startMillis == 0.0) this.startMillis = curr;
+    this.currMillis = curr - this.startMillis;
+
+    let skyScrollPercent = ((this.currMillis % this.texTotalMillis) / this.texTotalMillis);
+    this.texCoordYOffset = skyScrollPercent * this.texMaxYOffset; 
+    this.texCoordXOffset = skyScrollPercent * this.texMaxXOffset; 
+    this.setTexCoords();
 
     /* Clear canvas */
     const bg: Vec4 = this.backgroundColor;
