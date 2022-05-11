@@ -149,6 +149,7 @@ export let skyFSText = `
 
     varying vec2 v_texcoord;
     uniform sampler2D u_texture;
+    uniform float t; // time/animation progress varying between 0 and 1
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -164,9 +165,17 @@ export let skyFSText = `
         vec4 lightdir_norm = normalize(lightDir);
         float light = dot(normalize(lightDir), normal);
         gl_FragColor = texture2D(u_texture, v_texcoord);
-        float lambda = smoothstepd(0.3, 0.7, gl_FragColor.x).x;
+
+        float cloudBS = 5.0; // breathe speed
+        float lowerCloudBound = 0.0 + sin(mod(t, (1.0/cloudBS)) * (3.14 * cloudBS)) * 0.4;
+        float upperCloudBound = 1.0;
+        float lambda = smoothstepd(lowerCloudBound, upperCloudBound, gl_FragColor.x).x;
+
         vec4 blue = vec4(144.0/255.0, 193.0/255.0, 252.0/255.0, 1.0);
         vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
         gl_FragColor = white * lambda + blue * (1.0 - lambda);
+
+        // gl_FragColor = vec4(lowerCloudBound, lowerCloudBound, lowerCloudBound, 1.0); // debugging
+        // gl_FragColor = vec4(t, t, t, 1.0); // debugging
     }
 `;

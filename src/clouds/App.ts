@@ -64,6 +64,7 @@ export class CloudsAnimation extends CanvasAnimation {
   private skyProjUniformLocation: WebGLUniformLocation = -1;
   private skyLightUniformLocation: WebGLUniformLocation = -1;
   private skyTexUniformLocation : WebGLUniformLocation = -1; // texture
+  private skyTimeUniformLocation : WebGLUniformLocation = -1; // texture
 
   /* Moving Sky */
   private texCoordScale = 0.6;
@@ -378,6 +379,10 @@ export class CloudsAnimation extends CanvasAnimation {
       this.skyProgram,
       "u_texture"
     ) as WebGLUniformLocation;
+    this.skyTimeUniformLocation = gl.getUniformLocation(
+      this.skyProgram,
+      "t"
+    ) as WebGLUniformLocation;
 
     let skyMatrix: Mat4 = Mat4.identity;
     /* Bind uniforms */
@@ -398,6 +403,7 @@ export class CloudsAnimation extends CanvasAnimation {
     );
     gl.uniform4fv(this.skyLightUniformLocation, this.lightPosition.xyzw);
     gl.uniform1i(this.skyTexUniformLocation, 0);
+    gl.uniform1f(this.skyTimeUniformLocation, 0);
   }
 
   /**
@@ -414,6 +420,7 @@ export class CloudsAnimation extends CanvasAnimation {
     this.texCoordYOffset = skyScrollPercent * this.texMaxYOffset; 
     this.texCoordXOffset = skyScrollPercent * this.texMaxXOffset; 
     this.setTexCoords();
+    gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
 
     /* Clear canvas */
     const bg: Vec4 = this.backgroundColor;
