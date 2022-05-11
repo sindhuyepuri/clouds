@@ -102,6 +102,7 @@ export let terrainFSText = `
         // color = color * atmos + vec4(170.0/255.0, 190.0/255.0, 199.0/255.0, 1.0) * (1.0 - atmos);
         color = color * (1.0 - atmos) + vec4(0.66, 0.66, 0.66, 1.0) * atmos;
 
+        light = light * (1.0 - atmos) + 0.66 * atmos;
         gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
     }
 `;
