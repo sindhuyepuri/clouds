@@ -64,6 +64,7 @@ export class Terrain implements MaterialObject {
 
     /* Set Normals. */
     this.norms = [];
+
     let incr = 1;
     for (let i = -300; i < 300; i+=incr) {
       for (let j = 0; j < 500; j+=incr) { // was 300

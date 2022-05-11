@@ -2,7 +2,10 @@ import { MaterialObject } from "../lib/webglutils/Objects.js";
 import { Mat4, Vec3, Vec4 } from "../lib/TSM.js";
 
 export class Sky implements MaterialObject {
-  private floorZ: GLfloat = 400;
+  private skyZ: GLfloat = 400;
+  private skyTilt: GLfloat = 200;
+  private skyDim: GLfloat = 275;
+
   private vertices: Vec4[];
   private ind: Vec3[];
   private norms: Vec4[];
@@ -14,11 +17,11 @@ export class Sky implements MaterialObject {
   constructor() {
     /* Set default position. */
     this.vertices = [
-      new Vec4([0, 0, this.floorZ, 1]), // center
-      new Vec4([500, 0, this.floorZ, 1]),
-      new Vec4([0, 500, this.floorZ, 1]),
-      new Vec4([-500, 0, this.floorZ, 1]),
-      new Vec4([0, -500, this.floorZ, 1])
+      new Vec4([0, 0, this.skyZ, 1]), // center
+      new Vec4([this.skyDim + this.skyTilt, 0, this.skyZ, 1]),
+      new Vec4([0, this.skyDim, this.skyZ - this.skyTilt, 1]),
+      new Vec4([-this.skyDim - this.skyTilt, 0, this.skyZ, 1]),
+      new Vec4([0, -this.skyDim, this.skyZ + this.skyTilt, 1])
     ];
     console.assert(this.vertices != null);
     console.assert(this.vertices.length === 5);

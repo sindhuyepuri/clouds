@@ -467,15 +467,13 @@ export class CloudsAnimation extends CanvasAnimation {
 
     // Draw the sky
     gl.disable(gl.CULL_FACE);
-    // gl.frontFace(gl.CW);
-    // gl.cullFace(gl.BACK);
 
     const modelSkyMatrix = Mat4.identity;
     gl.useProgram(this.skyProgram);
 
     this.extVAO.bindVertexArrayOES(this.skyVAO);
 
-    /* Update menger buffers */
+    /* Update buffers */
   
       gl.bindBuffer(gl.ARRAY_BUFFER, this.skyPosBuffer);
       gl.bufferData(
@@ -512,7 +510,7 @@ export class CloudsAnimation extends CanvasAnimation {
         gl.STATIC_DRAW
       );
 
-    /* Update menger uniforms */
+    /* Update uniforms */
     gl.uniformMatrix4fv(
       this.skyWorldUniformLocation,
       false,
