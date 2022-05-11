@@ -1,1 +1,3 @@
-/dist
+/dist/*
+/dist/resources/.DS_Store
+!/dist/resources/
