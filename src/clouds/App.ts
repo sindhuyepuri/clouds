@@ -78,8 +78,8 @@ export class CloudsAnimation extends CanvasAnimation {
   private texMaxXOffset = this.texMaxYOffset;
   private startMillis = 0.0;
   private currMillis = 0.0;
-  private texTotalMillis = 120000.0;
-  // private texTotalMillis = 30000.0;
+  // private texTotalMillis = 120000.0;
+  private texTotalMillis = 30000.0;
 
   /* Global Rendering Info */
   // private lightPosition: Vec4 = new Vec4([10.0, 500.0, 10.0, 1.0]);
