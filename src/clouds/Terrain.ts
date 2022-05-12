@@ -19,7 +19,9 @@ export class Terrain implements MaterialObject {
   private minHeight: number;
   private maxHeight: number;
   private vertNorms: Vec3[][];
-  private lightPosition: Vec3 = new Vec3();
+  private incr = 4;
+
+  // private lightPosition: Vec3 = new Vec3();
 
   clamp = (num, min, max) => Math.min(Math.max(num, min), max)
   
@@ -49,8 +51,8 @@ export class Terrain implements MaterialObject {
     return new Vec4([...Vec3.cross(ze, xe).normalize().xyz, 0.0]);
   }
 
-  public inShadow(pos: Vec3) {
-    let light_dir = Vec3.difference(this.lightPosition, pos);
+  public inShadow(pos: Vec3, lightPosition: Vec3) {
+    let light_dir = Vec3.difference(lightPosition, pos);
     let t = Vec3.distance(light_dir, new Vec3([0.0, 0.0, 0.0]));
     // console.log(light_dir.xyz);
     // console.log(t);
@@ -80,14 +82,14 @@ export class Terrain implements MaterialObject {
     return 1.0;
   }
 
-  constructor(light: Vec4) {
+  constructor(lightPos: Vec3) {
     /* Set default position. */
     this.vertices = [];
     /* Set indices. */
     this.ind = [];
 
     let indx_count = 0;
-    this.lightPosition = new Vec3(light.xyz);
+    // this.lightPosition = new Vec3(light.xyz);
     this.noise = new Noise();
     this.noise.permutation();
     this.minHeight = 9999999;
@@ -98,20 +100,20 @@ export class Terrain implements MaterialObject {
 
     /* Set Normals. */
     this.norms = [];
-    let incr = 1;
+    // let incr = 1;
 
     // let width = 600;
     // let depth = 500;
 
-    for (let i = -this.width/2; i < this.width/2; i+=incr) {
-      for (let j = 0; j < this.depth; j+=incr) { // was 300
+    for (let i = -this.width/2; i < this.width/2; i += this.incr) {
+      for (let j = 0; j < this.depth; j += this.incr) { // was 300
         let v1 = new Vec4([i, this.getHeight(i, j), j, 1]);
-        let v2 = new Vec4([i, this.getHeight(i, j + 1), j + 1, 1]);
-        let v3 = new Vec4([i + 1, this.getHeight(i + 1, j + 1), j + 1, 1]);
-        let v4 = new Vec4([i + 1, this.getHeight(i + 1, j), j, 1]);
+        let v2 = new Vec4([i, this.getHeight(i, j + this.incr), j + this.incr, 1]);
+        let v3 = new Vec4([i + this.incr, this.getHeight(i + this.incr, j + this.incr), j + this.incr, 1]);
+        let v4 = new Vec4([i + this.incr, this.getHeight(i + this.incr, j), j, 1]);
         // shadows[i + this.width/2][j] = this.inShadow(new Vec3(v1.xyz));
         this.vertices.push(v1, v2, v3, v4);
-        this.norms.push(this.getNormal(i, j), this.getNormal(i, j + 1), this.getNormal(i + 1, j + 1), this.getNormal(i + 1, j));
+        this.norms.push(this.getNormal(i, j), this.getNormal(i, j + this.incr), this.getNormal(i + this.incr, j + this.incr), this.getNormal(i + this.incr, j));
         this.ind.push(new Vec3([indx_count, indx_count + 1, indx_count + 2]));
         this.ind.push(new Vec3([indx_count, indx_count + 2, indx_count + 3]));
 
@@ -120,7 +122,7 @@ export class Terrain implements MaterialObject {
     }
 
     // console.log("shadow", this.shadow);
-    this.updateShadows();
+    this.updateShadows(lightPos);
 
     /* Flatten Position. */
     this.verticesF32 = new Float32Array(this.vertices.length*4);
@@ -134,30 +136,34 @@ export class Terrain implements MaterialObject {
     this.normalsF32 = new Float32Array(this.norms.length*4);
     this.norms.forEach((v: Vec4, i: number) => {this.normalsF32.set(v.xyzw, i*4)});
 
-    // console.log(this.normalsFlat());
+    console.log(this.normalsF32.length);
+    console.log(this.indicesU32.length);
+    console.log(this.verticesF32.length);
   }
 
-  public updateShadows() {
+  public updateShadows(lightPos: Vec3) {
+
     let shadows = [];
-    for (let i = 0; i < this.width + 1; i++) {
+    for (let i = 0; i < this.width + this.incr; i += 1) {
       shadows.push([]);
-      for (let j = 0; j < this.depth + 1; j++) {
+      for (let j = 0; j < this.depth + this.incr; j += 1) {
         shadows[i].push(0);
       }
     }
-    for (let i = -this.width/2; i < this.width/2; i+=1) {
-      for (let j = 0; j < this.depth; j+=1) { // was 300
+
+    for (let i = -this.width/2; i < this.width/2; i += this.incr) {
+      for (let j = 0; j < this.depth; j += this.incr) { // was 300
         let v1 = new Vec4([i, this.getHeight(i, j), j, 1]);
-        shadows[i + this.width/2][j] = this.inShadow(new Vec3(v1.xyz));
+        shadows[i + this.width/2][j] = this.inShadow(new Vec3(v1.xyz), lightPos);
       }
     }
     this.shadow = [];
-    for (let i = -this.width/2; i < this.width/2; i += 1) {
-      for (let j = 0; j < this.depth; j += 1) {
+    for (let i = -this.width/2; i < this.width/2; i += this.incr) {
+      for (let j = 0; j < this.depth; j += this.incr) {
         this.shadow.push(shadows[i + this.width/2][j]);
-        this.shadow.push(shadows[i + this.width/2][j + 1]);
-        this.shadow.push(shadows[i + 1 + this.width/2][j + 1]);
-        this.shadow.push(shadows[i + 1 + this.width/2][j]);
+        this.shadow.push(shadows[i + this.width/2][j + this.incr]);
+        this.shadow.push(shadows[i + this.incr + this.width/2][j + this.incr]);
+        this.shadow.push(shadows[i + this.incr + this.width/2][j]);
       }
     }
     this.shadowF32 = new Float32Array(this.shadow);

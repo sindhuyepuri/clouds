@@ -12,7 +12,7 @@ import {
   skyFSText,
   skyVSText
 } from "./Shaders.js";
-import { Mat4, Vec2, Vec4 } from "../lib/TSM.js";
+import { Mat4, Vec2, Vec3, Vec4 } from "../lib/TSM.js";
 import { Sky } from "./Sky.js"
 
 export class CloudsAnimation extends CanvasAnimation {
@@ -78,21 +78,21 @@ export class CloudsAnimation extends CanvasAnimation {
   private texMaxXOffset = this.texMaxYOffset;
   private startMillis = 0.0;
   private currMillis = 0.0;
-  private texTotalMillis = 120000.0;
-  // private texTotalMillis = 30000.0;
+  // private texTotalMillis = 120000.0;
+  private texTotalMillis = 30000.0;
 
   /* Global Rendering Info */
   // private lightPosition: Vec4 = new Vec4([10.0, 500.0, 10.0, 1.0]);
   // private lightPosition: Vec4 = new Vec4([10.0, -10.0, 10.0, 1.0]);
   // private lightPosition: Vec4 = new Vec4([-10.0, 10.0, -10.0, 1.0]);
-  private lightPosition: Vec4 = new Vec4([100, 60, 20, 1.0]);
+  private lightPosition: Vec4 = new Vec4([50, 60, 20, 1.0]);
 
   private backgroundColor: Vec4 = new Vec4();
 
   constructor(canvas: HTMLCanvasElement) {
     super(canvas);
     // this.gui = new GUI(canvas, this, this.sponge);
-    this.terrain = new Terrain(this.lightPosition);
+    this.terrain = new Terrain(new Vec3(this.lightPosition.xyz));
     this.gui = new GUI(canvas, this);
     this.reset();
     /* Setup Animation */
@@ -183,26 +183,9 @@ export class CloudsAnimation extends CanvasAnimation {
       0
     );
     gl.enableVertexAttribArray(this.terrainNormAttribLoc);
-
-    /* Create and setup normals buffer*/
-    this.terrainShadowAttribLoc = gl.getAttribLocation(
-      this.terrainProgram,
-      "shadow"
-    );
-
+    
     this.terrainShadowBuffer = gl.createBuffer() as WebGLBuffer;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.terrainShadowBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, this.terrain.shadowF32, gl.STATIC_DRAW);
-
-    gl.vertexAttribPointer(
-      this.terrainShadowAttribLoc,
-      1,
-      gl.FLOAT,
-      false,
-      1 * Float32Array.BYTES_PER_ELEMENT,
-      0
-    );
-    gl.enableVertexAttribArray(this.terrainShadowAttribLoc);
+    // this.updateTerrainShadow();
 
     /* Create and setup index buffer*/
     this.terrainIndexBuffer = gl.createBuffer() as WebGLBuffer;
@@ -287,6 +270,40 @@ export class CloudsAnimation extends CanvasAnimation {
          
       ]),
     gl.STATIC_DRAW);    
+  }
+
+  public updateTerrainShadow() {
+    /* Create and setup shadow buffer*/
+    const gl = this.ctx;
+    // gl.useProgram(this.terrainProgram);
+    
+    this.extVAO.bindVertexArrayOES(this.terrainVAO);
+
+    this.terrainShadowAttribLoc = gl.getAttribLocation(
+      this.terrainProgram,
+      "shadow"
+    );
+
+    // this.terrainVAO = this.extVAO.createVertexArrayOES() as WebGLVertexArrayObjectOES;
+
+    this.terrain.updateShadows(new Vec3(this.lightPosition.xyz));
+    
+    // this.terrainShadowBuffer = gl.createBuffer() as WebGLBuffer;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.terrainShadowBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, this.terrain.shadowF32, gl.STATIC_DRAW);
+
+    gl.vertexAttribPointer(
+      this.terrainShadowAttribLoc,
+      1,
+      gl.FLOAT,
+      false,
+      1 * Float32Array.BYTES_PER_ELEMENT,
+      0
+    );
+    gl.enableVertexAttribArray(this.terrainShadowAttribLoc);
+    this.extVAO.bindVertexArrayOES(this.terrainVAO);
+
+    gl.uniform4fv(this.terrainLightUniformLocation, this.lightPosition.xyzw);
   }
 
   public initTexture(): void {
@@ -466,6 +483,9 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.useProgram(this.terrainProgram);
     gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
 
+    /* Light moving across sky */
+    
+    
     /* Clear canvas */
     const bg: Vec4 = this.backgroundColor;
     gl.clearColor(bg.r, bg.g, bg.b, bg.a);
@@ -496,6 +516,14 @@ export class CloudsAnimation extends CanvasAnimation {
         0
       );
       gl.enableVertexAttribArray(this.terrainPosAttribLoc);
+      
+      let t_light = 200.0 * ((this.currMillis % 30000.0)/30000.0);
+      let light_x = t_light - 100.0;
+      // let light_y = -0.02 * Math.pow(t_light - 50, 2) + 50;
+      this.lightPosition = new Vec4([light_x, this.lightPosition.y, this.lightPosition.z, 1.0]);
+      // this.lightPosition = new Vec4([-50, 60, 20, 1.0]);
+      // console.log(this.lightPosition.x);
+      this.updateTerrainShadow();
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this.terrainNormBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, this.terrain.normalsFlat(), gl.STATIC_DRAW);
