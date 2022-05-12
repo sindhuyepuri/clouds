@@ -12,7 +12,7 @@ import {
   skyFSText,
   skyVSText
 } from "./Shaders.js";
-import { Mat4, Vec4 } from "../lib/TSM.js";
+import { Mat4, Vec2, Vec4 } from "../lib/TSM.js";
 import { Sky } from "./Sky.js"
 
 export class CloudsAnimation extends CanvasAnimation {
@@ -39,6 +39,8 @@ export class CloudsAnimation extends CanvasAnimation {
   private terrainViewUniformLocation: WebGLUniformLocation = -1;
   private terrainProjUniformLocation: WebGLUniformLocation = -1;
   private terrainLightUniformLocation: WebGLUniformLocation = -1;
+  private terrainTexUniformLocation : WebGLUniformLocation = -1; // texture
+  private terrainTimeUniformLocation : WebGLUniformLocation = -1; // texture
 
   /* The Sky */
   private sky: Sky = new Sky();
@@ -75,6 +77,7 @@ export class CloudsAnimation extends CanvasAnimation {
   private startMillis = 0.0;
   private currMillis = 0.0;
   private texTotalMillis = 120000.0;
+  // private texTotalMillis = 30000.0;
 
   /* Global Rendering Info */
   private lightPosition: Vec4 = new Vec4();
@@ -90,10 +93,12 @@ export class CloudsAnimation extends CanvasAnimation {
     this.reset();
   }
 
-  // public createCloudTexture () {
-	// 	const gl: WebGLRenderingContext = this.ctx;
-  //   gl.bindTexture(gl.TEXTURE_2D)
-	// }
+  // // gets UV coordinates corresponding to (x, z) position (on terrain)
+  // public getSkyUV(x: number, z: number): Vec2 {
+  //   let uv = new Vec2();
+  //   uv.x = 
+  //   return uv;
+  // }
 
   /**
    * Setup the animation. This can be called again to reset the animation.
@@ -202,6 +207,14 @@ export class CloudsAnimation extends CanvasAnimation {
       this.terrainProgram,
       "lightPosition"
     ) as WebGLUniformLocation;
+    this.terrainTexUniformLocation = gl.getUniformLocation(
+      this.terrainProgram,
+      "u_texture"
+    ) as WebGLUniformLocation;
+    this.terrainTimeUniformLocation = gl.getUniformLocation(
+      this.terrainProgram,
+      "t"
+    ) as WebGLUniformLocation;
     
     let terrainMatrix: Mat4 = Mat4.identity;
     /* Bind uniforms */
@@ -221,6 +234,8 @@ export class CloudsAnimation extends CanvasAnimation {
       new Float32Array(Mat4.identity.all())
     );
     gl.uniform4fv(this.terrainLightUniformLocation, this.lightPosition.xyzw);
+    gl.uniform1i(this.terrainTexUniformLocation, 0);
+    gl.uniform1f(this.terrainTimeUniformLocation, 0);
   }
 
   public setTexCoords () {
@@ -420,7 +435,10 @@ export class CloudsAnimation extends CanvasAnimation {
     this.texCoordYOffset = skyScrollPercent * this.texMaxYOffset; 
     this.texCoordXOffset = skyScrollPercent * this.texMaxXOffset; 
     this.setTexCoords();
+    gl.useProgram(this.skyProgram);
     gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
+    gl.useProgram(this.terrainProgram);
+    gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
 
     /* Clear canvas */
     const bg: Vec4 = this.backgroundColor;

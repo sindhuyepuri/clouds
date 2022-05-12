@@ -75,6 +75,9 @@ export let terrainFSText = `
     varying vec3 position;
     varying vec4 normal;   
     varying vec4 lightDir;
+    
+    uniform sampler2D u_texture;
+    uniform float t; // time/animation progress varying between 0 and 1
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -103,6 +106,14 @@ export let terrainFSText = `
         color = color * (1.0 - atmos) + vec4(0.66, 0.66, 0.66, 1.0) * atmos;
 
         light = light * (1.0 - atmos) + 0.66 * atmos;
+
+        float texCoordScale = 0.6;
+        float texCoordOffset = (1.0 - texCoordScale) * t;
+        vec2 v_texcoord = vec2((position.x + 300.0) / 600.0 * texCoordScale + texCoordOffset, position.z / 500.0 * texCoordScale + texCoordOffset);
+        float cloudShadowRaw = texture2D(u_texture, v_texcoord).x;
+        float cloudShadow = clamp(cloudShadowRaw + 0.3, 0.3, 1.0);
+        light = light * cloudShadow;
+
         gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
     }
 `;
