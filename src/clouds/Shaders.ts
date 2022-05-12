@@ -111,11 +111,14 @@ export let terrainFSText = `
 
         light = light * (1.0 - atmos) + 0.66 * atmos;
 
+        float cloudBS = 5.0; // breathe speed
+        float lowerCloudBound = 0.3 + sin(mod(t, (1.0/cloudBS)) * (3.14 * cloudBS)) * 0.3;
+
         float texCoordScale = 0.6;
         float texCoordOffset = (1.0 - texCoordScale) * t;
         vec2 v_texcoord = vec2((position.x + 300.0) / 600.0 * texCoordScale + texCoordOffset, position.z / 500.0 * texCoordScale + texCoordOffset);
         float cloudShadowRaw = texture2D(u_texture, v_texcoord).x;
-        float cloudShadow = clamp(cloudShadowRaw + 0.3, 0.3, 1.0);
+        float cloudShadow = clamp(cloudShadowRaw + lowerCloudBound, 0.3, 1.0);
         light = light * cloudShadow;
 
         gl_FragColor = abs(vec4(shade * light * color.x, shade * light * color.y, shade * light * color.z, 1.0));

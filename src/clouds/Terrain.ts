@@ -95,7 +95,6 @@ export class Terrain implements MaterialObject {
     this.minHeight = 9999999;
     this.maxHeight = -999;
     // this.shadow = new Number[][];
-    this.shadowF32 = new Float32Array();    
     // console.log(light.xyz);
 
     /* Set Normals. */
