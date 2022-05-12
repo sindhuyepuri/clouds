@@ -19,7 +19,7 @@ export class CloudsAnimation extends CanvasAnimation {
   private gui: GUI;
 
   /* The Terrain */
-  private terrain: Terrain = new Terrain();
+  private terrain: Terrain;
 
   /* Terrain Rendering Info */
   private terrainVAO: WebGLVertexArrayObjectOES = -1;
@@ -29,10 +29,12 @@ export class CloudsAnimation extends CanvasAnimation {
   private terrainPosBuffer: WebGLBuffer = -1;
   private terrainIndexBuffer: WebGLBuffer = -1;
   private terrainNormBuffer: WebGLBuffer = -1;
+  private terrainShadowBuffer: WebGLBuffer = -1;
 
   /* Terrain Attribute Locations */
   private terrainPosAttribLoc: GLint = -1;
   private terrainNormAttribLoc: GLint = -1;
+  private terrainShadowAttribLoc: GLint = -1;
 
   /* Terrain Uniform Locations */
   private terrainWorldUniformLocation: WebGLUniformLocation = -1;
@@ -67,17 +69,20 @@ export class CloudsAnimation extends CanvasAnimation {
 
 
   /* Global Rendering Info */
-  private lightPosition: Vec4 = new Vec4();
+  // private lightPosition: Vec4 = new Vec4([10.0, 500.0, 10.0, 1.0]);
+  // private lightPosition: Vec4 = new Vec4([10.0, -10.0, 10.0, 1.0]);
+  // private lightPosition: Vec4 = new Vec4([-10.0, 10.0, -10.0, 1.0]);
+  private lightPosition: Vec4 = new Vec4([100, 60, 20, 1.0]);
+
   private backgroundColor: Vec4 = new Vec4();
 
   constructor(canvas: HTMLCanvasElement) {
     super(canvas);
     // this.gui = new GUI(canvas, this, this.sponge);
+    this.terrain = new Terrain(this.lightPosition);
     this.gui = new GUI(canvas, this);
-
-
-    /* Setup Animation */
     this.reset();
+    /* Setup Animation */
   }
 
   // public createCloudTexture () {
@@ -91,7 +96,7 @@ export class CloudsAnimation extends CanvasAnimation {
   public reset(): void {
 
     /* debugger; */
-    this.lightPosition = new Vec4([-10.0, 10.0, -10.0, 1.0]);
+    // this.lightPosition = new Vec4([-10.0, 10.0, -10.0, 1.0]);
     this.backgroundColor = new Vec4([0.529411764705882, 0.807843137254902, 0.980392156862745, 1.0]);
     console.log("init terrain");
     this.initTerrain();
@@ -101,6 +106,7 @@ export class CloudsAnimation extends CanvasAnimation {
   }
 
   public initTerrain(): void {
+    
     const gl: WebGLRenderingContext = this.ctx;
 
     /* Compile Shaders */
@@ -127,9 +133,9 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.terrainPosBuffer);
     /* Fill the buffer with data */
     gl.bufferData(gl.ARRAY_BUFFER, this.terrain.positionsFlat(), gl.STATIC_DRAW);
-    console.log("terrain positions " + this.terrain.positionsFlat());
-    console.log("terrain normals " + this.terrain.normalsFlat());
-    console.log("terrain indices " + this.terrain.indicesFlat())
+    // console.log("terrain positions " + this.terrain.positionsFlat());
+    // console.log("terrain normals " + this.terrain.normalsFlat());
+    // console.log("terrain indices " + this.terrain.indicesFlat())
 
     /* Tell WebGL how to read the buffer and where the data goes */
     gl.vertexAttribPointer(
@@ -162,6 +168,26 @@ export class CloudsAnimation extends CanvasAnimation {
       0
     );
     gl.enableVertexAttribArray(this.terrainNormAttribLoc);
+
+    /* Create and setup normals buffer*/
+    this.terrainShadowAttribLoc = gl.getAttribLocation(
+      this.terrainProgram,
+      "shadow"
+    );
+
+    this.terrainShadowBuffer = gl.createBuffer() as WebGLBuffer;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.terrainShadowBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, this.terrain.shadowF32, gl.STATIC_DRAW);
+
+    gl.vertexAttribPointer(
+      this.terrainShadowAttribLoc,
+      1,
+      gl.FLOAT,
+      false,
+      1 * Float32Array.BYTES_PER_ELEMENT,
+      0
+    );
+    gl.enableVertexAttribArray(this.terrainShadowAttribLoc);
 
     /* Create and setup index buffer*/
     this.terrainIndexBuffer = gl.createBuffer() as WebGLBuffer;

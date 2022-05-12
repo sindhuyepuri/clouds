@@ -45,10 +45,12 @@ export let terrainVSText = `
     attribute vec3 vertPosition;
     attribute vec3 vertColor;
     attribute vec4 aNorm;
-    
+    attribute float shadow;
+
     varying vec4 lightDir;
     varying vec4 normal;   
     varying vec3 position;
+    varying float shade;
 
     uniform vec4 lightPosition;
     uniform mat4 mWorld;
@@ -66,6 +68,7 @@ export let terrainVSText = `
         position = vertPosition;
         //  Pass along the vertex normal (world coordinates)
         normal = aNorm;
+        shade = shadow;
     }       
 `;
 
@@ -75,6 +78,7 @@ export let terrainFSText = `
     varying vec3 position;
     varying vec4 normal;   
     varying vec4 lightDir;
+    varying float shade;
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -103,7 +107,9 @@ export let terrainFSText = `
         color = color * (1.0 - atmos) + vec4(0.66, 0.66, 0.66, 1.0) * atmos;
 
         light = light * (1.0 - atmos) + 0.66 * atmos;
-        gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
+        // gl_FragColor = vec4(shade, shade, shade, 1.0);
+        gl_FragColor = abs(vec4(shade * light * color.x, shade * light * color.y, shade * light * color.z, 1.0));
+        // gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
     }
 `;
 
