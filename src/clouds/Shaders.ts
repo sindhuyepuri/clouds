@@ -79,6 +79,9 @@ export let terrainFSText = `
     varying vec4 normal;   
     varying vec4 lightDir;
     varying float shade;
+    
+    uniform sampler2D u_texture;
+    uniform float t; // time/animation progress varying between 0 and 1
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -107,9 +110,15 @@ export let terrainFSText = `
         color = color * (1.0 - atmos) + vec4(0.66, 0.66, 0.66, 1.0) * atmos;
 
         light = light * (1.0 - atmos) + 0.66 * atmos;
-        // gl_FragColor = vec4(shade, shade, shade, 1.0);
+
+        float texCoordScale = 0.6;
+        float texCoordOffset = (1.0 - texCoordScale) * t;
+        vec2 v_texcoord = vec2((position.x + 300.0) / 600.0 * texCoordScale + texCoordOffset, position.z / 500.0 * texCoordScale + texCoordOffset);
+        float cloudShadowRaw = texture2D(u_texture, v_texcoord).x;
+        float cloudShadow = clamp(cloudShadowRaw + 0.3, 0.3, 1.0);
+        light = light * cloudShadow;
+
         gl_FragColor = abs(vec4(shade * light * color.x, shade * light * color.y, shade * light * color.z, 1.0));
-        // gl_FragColor = abs(vec4(light * color.x, light * color.y, light * color.z, 1.0));
     }
 `;
 
@@ -155,6 +164,7 @@ export let skyFSText = `
 
     varying vec2 v_texcoord;
     uniform sampler2D u_texture;
+    uniform float t; // time/animation progress varying between 0 and 1
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -170,9 +180,17 @@ export let skyFSText = `
         vec4 lightdir_norm = normalize(lightDir);
         float light = dot(normalize(lightDir), normal);
         gl_FragColor = texture2D(u_texture, v_texcoord);
-        float lambda = smoothstepd(0.3, 0.7, gl_FragColor.x).x;
+
+        float cloudBS = 5.0; // breathe speed
+        float lowerCloudBound = 0.0 + sin(mod(t, (1.0/cloudBS)) * (3.14 * cloudBS)) * 0.4;
+        float upperCloudBound = 1.0;
+        float lambda = smoothstepd(lowerCloudBound, upperCloudBound, gl_FragColor.x).x;
+
         vec4 blue = vec4(144.0/255.0, 193.0/255.0, 252.0/255.0, 1.0);
         vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
         gl_FragColor = white * lambda + blue * (1.0 - lambda);
+
+        // gl_FragColor = vec4(lowerCloudBound, lowerCloudBound, lowerCloudBound, 1.0); // debugging
+        // gl_FragColor = vec4(t, t, t, 1.0); // debugging
     }
 `;
