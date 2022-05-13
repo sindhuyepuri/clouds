@@ -71,15 +71,14 @@ export class CloudsAnimation extends CanvasAnimation {
   private skyTimeUniformLocation : WebGLUniformLocation = -1; // texture
 
   /* Moving Sky */
-  private texCoordScale = 0.6;
+  private texCoordScale = 0.3;
   private texCoordXOffset = 0;
   private texCoordYOffset = 0;
   private texMaxYOffset = 1 - this.texCoordScale; 
   private texMaxXOffset = this.texMaxYOffset;
   private startMillis = 0.0;
   private currMillis = 0.0;
-  // private texTotalMillis = 120000.0;
-  private texTotalMillis = 30000.0;
+  private texTotalMillis = 120000.0;
 
   /* Global Rendering Info */
   // private lightPosition: Vec4 = new Vec4([10.0, 500.0, 10.0, 1.0]);
@@ -327,7 +326,7 @@ export class CloudsAnimation extends CanvasAnimation {
     
     // Asynchronously load an image
     var image = new Image();
-    image.src = "resources/noise3.png";
+    image.src = "resources/noise3-mirrored2.png";
     image.addEventListener('load', function() {
       // Now that the image has loaded make copy it to the texture.
       gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -479,11 +478,11 @@ export class CloudsAnimation extends CanvasAnimation {
     let skyScrollPercent = ((this.currMillis % this.texTotalMillis) / this.texTotalMillis);
     this.texCoordYOffset = skyScrollPercent * this.texMaxYOffset; 
     this.texCoordXOffset = skyScrollPercent * this.texMaxXOffset; 
-    // this.setTexCoords();
-    // gl.useProgram(this.skyProgram);
-    // gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
-    // gl.useProgram(this.terrainProgram);
-    // gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
+    this.setTexCoords();
+    gl.useProgram(this.skyProgram);
+    gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
+    gl.useProgram(this.terrainProgram);
+    gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
 
     /* Light moving across sky */
     
@@ -642,16 +641,37 @@ export class CloudsAnimation extends CanvasAnimation {
   public getGUI(): GUI {
     return this.gui;
   }
+
+  public updateCloudSpeed (sliderValue: number) {
+
+  }
+
+  public updateCloudCover (sliderValue: number) {
+
+  }
+
+  public updateTerrainPoly (sliderValue: number) {
+
+  }
 }
 
 export function initializeCanvas(): void {
   const canvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   /* Start drawing */
   const canvasAnimation: CloudsAnimation = new CloudsAnimation(canvas);
-  var slider = document.getElementById("cloud-cover") as HTMLInputElement;
-  slider.oninput = function() {
-    console.log(slider.value);
+  var cloudSpeedSlider = document.getElementById("cloud-speed") as HTMLInputElement;
+  cloudSpeedSlider.oninput = function() {
+    canvasAnimation.updateCloudSpeed(Number.parseInt(cloudCoverSlider.value));
   }
+  var cloudCoverSlider = document.getElementById("cloud-cover") as HTMLInputElement;
+  cloudCoverSlider.oninput = function() {
+    canvasAnimation.updateCloudCover(Number.parseInt(cloudCoverSlider.value));
+  }
+  var terrainPolySlider = document.getElementById("terrain-poly") as HTMLInputElement;
+  terrainPolySlider.oninput = function() {
+    canvasAnimation.updateTerrainPoly(Number.parseInt(terrainPolySlider.value));
+  }
+
   canvasAnimation.start();
 }
 
