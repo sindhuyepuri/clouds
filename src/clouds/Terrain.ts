@@ -60,23 +60,17 @@ export class Terrain implements MaterialObject {
     let cur_pos = pos.copy();
     // let max_height_dif = -99999;
     let res = 1.0;
-    // for (let i = 0.2; i < t; i += 10) {
-    //   cur_pos = Vec3.sum(cur_pos, light_dir.scale(i));
-    //   // if difference is positive, then in shadow
-    //   let height_dif = this.getHeight(cur_pos.x, cur_pos.z) - cur_pos.y;
-    //   res = Math.min(res, 32.0 * height_dif/i);
-    //   if (height_dif > 1.0) {
-    //     // console.log(this.getHeight(cur_pos.x, cur_pos.z), cur_pos.y, pos.y);
-    //     return this.clamp(1.0/height_dif + 0.4, 0.4, 1.0);
-    //   }
-    // }
     let t_incr = 0.2;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 32; i++) {
       cur_pos = Vec3.sum(cur_pos, light_dir.scale(t_incr));
       let height_dif = this.getHeight(cur_pos.x, cur_pos.z) - cur_pos.y;
       if (height_dif > 1.0) {
         return this.clamp(t_incr/height_dif + 0.4, 0.4, 1.0);
       }
+      // if (Math.abs(t_incr - t) < 0.01) {
+      //   console.log("hit sun");
+      //   break;
+      // }
       t_incr += this.clamp(-height_dif, 0.5 + t * 0.05, 25.0);
     }
     return 1.0;

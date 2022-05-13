@@ -245,6 +245,8 @@ export class CloudsAnimation extends CanvasAnimation {
     gl.uniform4fv(this.terrainLightUniformLocation, this.lightPosition.xyzw);
     gl.uniform1i(this.terrainTexUniformLocation, 0);
     gl.uniform1f(this.terrainTimeUniformLocation, 0);
+
+    this.updateTerrainShadow();
   }
 
   public setTexCoords () {
@@ -477,11 +479,11 @@ export class CloudsAnimation extends CanvasAnimation {
     let skyScrollPercent = ((this.currMillis % this.texTotalMillis) / this.texTotalMillis);
     this.texCoordYOffset = skyScrollPercent * this.texMaxYOffset; 
     this.texCoordXOffset = skyScrollPercent * this.texMaxXOffset; 
-    this.setTexCoords();
-    gl.useProgram(this.skyProgram);
-    gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
-    gl.useProgram(this.terrainProgram);
-    gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
+    // this.setTexCoords();
+    // gl.useProgram(this.skyProgram);
+    // gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
+    // gl.useProgram(this.terrainProgram);
+    // gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
 
     /* Light moving across sky */
     
@@ -520,10 +522,10 @@ export class CloudsAnimation extends CanvasAnimation {
       let t_light = 200.0 * ((this.currMillis % 30000.0)/30000.0);
       let light_x = t_light - 100.0;
       // let light_y = -0.02 * Math.pow(t_light - 50, 2) + 50;
-      this.lightPosition = new Vec4([light_x, this.lightPosition.y, this.lightPosition.z, 1.0]);
+      // this.lightPosition = new Vec4([light_x, this.lightPosition.y, this.lightPosition.z, 1.0]);
       // this.lightPosition = new Vec4([-50, 60, 20, 1.0]);
       // console.log(this.lightPosition.x);
-      this.updateTerrainShadow();
+      // this.updateTerrainShadow();
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this.terrainNormBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, this.terrain.normalsFlat(), gl.STATIC_DRAW);
@@ -646,5 +648,10 @@ export function initializeCanvas(): void {
   const canvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   /* Start drawing */
   const canvasAnimation: CloudsAnimation = new CloudsAnimation(canvas);
+  var slider = document.getElementById("cloud-cover") as HTMLInputElement;
+  slider.oninput = function() {
+    console.log(slider.value);
+  }
   canvasAnimation.start();
 }
+

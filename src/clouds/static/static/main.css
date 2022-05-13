@@ -38,6 +38,11 @@ body {
     padding: var(--padding);
 }
 
+.slidecontainer {
+    position: absolute;
+    right: 50px;
+}
+
 #test-view {
     grid-area: tests;
 }
