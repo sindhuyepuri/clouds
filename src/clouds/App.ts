@@ -78,7 +78,12 @@ export class CloudsAnimation extends CanvasAnimation {
   private texMaxXOffset = this.texMaxYOffset;
   private startMillis = 0.0;
   private currMillis = 0.0;
-  private texTotalMillis = 120000.0;
+
+  private cloudMinMillis = 20000.0;
+  private cloudMaxMillis = 120000.0;
+  private cloudSpeed = 0.5; // between 0 and 1
+  private texTotalMillis = this.cloudMinMillis + this.cloudSpeed * (this.cloudMaxMillis - this.cloudMinMillis);
+  private skyScrollPercent = 0.0;
 
   /* Global Rendering Info */
   // private lightPosition: Vec4 = new Vec4([10.0, 500.0, 10.0, 1.0]);
@@ -473,16 +478,19 @@ export class CloudsAnimation extends CanvasAnimation {
 
     let curr = new Date().getTime();
     if (this.startMillis == 0.0) this.startMillis = curr;
-    this.currMillis = curr - this.startMillis;
+    let elapsedMillis = curr - this.startMillis - this.currMillis;
+    this.currMillis += elapsedMillis;
+    console.log(elapsedMillis);
 
-    let skyScrollPercent = ((this.currMillis % this.texTotalMillis) / this.texTotalMillis);
-    this.texCoordYOffset = skyScrollPercent * this.texMaxYOffset; 
-    this.texCoordXOffset = skyScrollPercent * this.texMaxXOffset; 
+    this.skyScrollPercent += ((elapsedMillis % this.texTotalMillis) / this.texTotalMillis);
+    if (this.skyScrollPercent > 1) this.skyScrollPercent -= 1;
+    this.texCoordYOffset = this.skyScrollPercent * this.texMaxYOffset; 
+    this.texCoordXOffset = this.skyScrollPercent * this.texMaxXOffset; 
     this.setTexCoords();
     gl.useProgram(this.skyProgram);
-    gl.uniform1f(this.skyTimeUniformLocation, skyScrollPercent); // update shader time
+    gl.uniform1f(this.skyTimeUniformLocation, this.skyScrollPercent); // update shader time
     gl.useProgram(this.terrainProgram);
-    gl.uniform1f(this.terrainTimeUniformLocation, skyScrollPercent); // update shader time
+    gl.uniform1f(this.terrainTimeUniformLocation, this.skyScrollPercent); // update shader time
 
     /* Light moving across sky */
     
@@ -643,7 +651,9 @@ export class CloudsAnimation extends CanvasAnimation {
   }
 
   public updateCloudSpeed (sliderValue: number) {
-
+    this.cloudSpeed = (100.0 - sliderValue) / 100.0;
+    this.texTotalMillis = this.cloudMinMillis + this.cloudSpeed * (this.cloudMaxMillis - this.cloudMinMillis);
+    console.log(this.texTotalMillis);
   }
 
   public updateCloudCover (sliderValue: number) {
@@ -661,7 +671,7 @@ export function initializeCanvas(): void {
   const canvasAnimation: CloudsAnimation = new CloudsAnimation(canvas);
   var cloudSpeedSlider = document.getElementById("cloud-speed") as HTMLInputElement;
   cloudSpeedSlider.oninput = function() {
-    canvasAnimation.updateCloudSpeed(Number.parseInt(cloudCoverSlider.value));
+    canvasAnimation.updateCloudSpeed(Number.parseInt(cloudSpeedSlider.value));
   }
   var cloudCoverSlider = document.getElementById("cloud-cover") as HTMLInputElement;
   cloudCoverSlider.oninput = function() {
