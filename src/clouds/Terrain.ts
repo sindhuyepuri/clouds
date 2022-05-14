@@ -19,7 +19,7 @@ export class Terrain implements MaterialObject {
   private minHeight: number;
   private maxHeight: number;
   private vertNorms: Vec3[][];
-  private incr = 4;
+  private incr = 1;
   private lightPos: Vec3;
 
   // private lightPosition: Vec3 = new Vec3();
