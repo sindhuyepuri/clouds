@@ -699,13 +699,14 @@ export function initializeCanvas(): void {
   var customCloudCoverCheckbox = document.getElementById("cloud-cover-cb") as HTMLInputElement;
   customCloudCoverCheckbox.oninput = function() {
     canvasAnimation.customCloudCover = customCloudCoverCheckbox.checked;
-    canvasAnimation.cloudCover = 0.0;
+    canvasAnimation.updateCloudCover(Number.parseInt(cloudCoverSlider.value), 100.0);
   }
 
   var cloudCoverSlider = document.getElementById("cloud-cover") as HTMLInputElement;
   cloudCoverSlider.oninput = function() {
-    canvasAnimation.updateCloudCover(Number.parseInt(cloudCoverSlider.value), 100.0);
     customCloudCoverCheckbox.checked = true;
+    canvasAnimation.customCloudCover = true;
+    canvasAnimation.updateCloudCover(Number.parseInt(cloudCoverSlider.value), 100.0);
   }
   
   canvasAnimation.start();
