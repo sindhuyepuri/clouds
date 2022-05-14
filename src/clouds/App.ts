@@ -705,6 +705,7 @@ export function initializeCanvas(): void {
   var cloudCoverSlider = document.getElementById("cloud-cover") as HTMLInputElement;
   cloudCoverSlider.oninput = function() {
     canvasAnimation.updateCloudCover(Number.parseInt(cloudCoverSlider.value), 100.0);
+    customCloudCoverCheckbox.checked = true;
   }
   
   canvasAnimation.start();
