@@ -20,6 +20,7 @@ export class Terrain implements MaterialObject {
   private maxHeight: number;
   private vertNorms: Vec3[][];
   private incr = 4;
+  private lightPos: Vec3;
 
   // private lightPosition: Vec3 = new Vec3();
 
@@ -76,7 +77,7 @@ export class Terrain implements MaterialObject {
     return 1.0;
   }
 
-  constructor(lightPos: Vec3) {
+  public generateTerrain () {
     /* Set default position. */
     this.vertices = [];
     /* Set indices. */
@@ -115,7 +116,7 @@ export class Terrain implements MaterialObject {
     }
 
     // console.log("shadow", this.shadow);
-    this.updateShadows(lightPos);
+    this.updateShadows(this.lightPos);
 
     /* Flatten Position. */
     this.verticesF32 = new Float32Array(this.vertices.length*4);
@@ -132,6 +133,16 @@ export class Terrain implements MaterialObject {
     console.log(this.normalsF32.length);
     console.log(this.indicesU32.length);
     console.log(this.verticesF32.length);
+  }
+
+  public setIncr (incr: number) {
+    this.incr = incr;
+    this.generateTerrain();
+  }
+
+  constructor(lightPos: Vec3) {
+    this.lightPos = lightPos;
+    this.generateTerrain();
   }
 
   public updateShadows(lightPos: Vec3) {

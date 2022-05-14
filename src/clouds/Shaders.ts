@@ -82,6 +82,7 @@ export let terrainFSText = `
     
     uniform sampler2D u_texture;
     uniform float t; // time/animation progress varying between 0 and 1
+    uniform float cloudCover; // if 0.0, fluctuate cloud cover. otherwise, scale based on val (0->1).
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -113,6 +114,9 @@ export let terrainFSText = `
 
         float cloudBS = 5.0; // breathe speed
         float lowerCloudBound = 0.3 + sin(mod(t, (1.0/cloudBS)) * (3.14 * cloudBS)) * 0.3;
+        if (cloudCover != 0.0) { // custom cloud cover enabled
+            lowerCloudBound = 0.3 + cloudCover * 0.3;
+        }
 
         float texCoordScale = 0.6;
         float texCoordOffset = (1.0 - texCoordScale) * t;
@@ -168,6 +172,7 @@ export let skyFSText = `
     varying vec2 v_texcoord;
     uniform sampler2D u_texture;
     uniform float t; // time/animation progress varying between 0 and 1
+    uniform float cloudCover; // if 0.0, fluctuate cloud cover. otherwise, scale based on val (0->1).
 
     vec2 smoothstepd( float a, float b, float x) {
         if( x<a ) return vec2( 0.0, 0.0 );
@@ -186,6 +191,9 @@ export let skyFSText = `
 
         float cloudBS = 5.0; // breathe speed
         float lowerCloudBound = 0.0 + sin(mod(t, (1.0/cloudBS)) * (3.14 * cloudBS)) * 0.4;
+        if (cloudCover != 0.0) { // custom cloud cover enabled
+            lowerCloudBound = 0.0 + cloudCover * 0.4;
+        }
         float upperCloudBound = 1.0;
         float lambda = smoothstepd(lowerCloudBound, upperCloudBound, gl_FragColor.x).x;
 
